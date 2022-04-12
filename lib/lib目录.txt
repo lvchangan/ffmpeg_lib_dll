@@ -1,0 +1,10 @@
+avcodec.lib
+avdevice.lib
+avfilter.lib
+avformat.lib
+avutil.lib
+postproc.lib
+SDL2.lib
+SDL2main.lib
+swresample.lib
+swscale.lib

@@ -1,0 +1,96 @@
+一、使用方法
+	1.命令格式： ffmpeg -i [输入文件名] [参数选项] -f [格式] [输出文件]   
+				 ffmpeg [[options] [`-i' input_file]]... {[options] output_file}...
+
+	2.通用选项:
+	-f fmt 		 强迫采用格式fmt
+	-i filename  输入文件 
+	-target type 设置目标文件类型(vcd,svcd,dvd)   所有的格式选项（比特率，编解码以及缓冲区大小）自动设置 
+	ex:  ffmpeg -i myfile.avi -target vcd /tmp/vcd.mpg
+
+	3.视频选项 
+	-b bitrate    设置比特率，缺省200kb/s 
+	-r fps 	      设置帧频 缺省25 
+	-s size    	  设置帧大小 格式为WXH 缺省160X128 ex: -s 1920x1080  简写：Sqcif 128X96 qcif 176X144 cif 252X288 4cif 704X576 
+	-vcodec codec 强制使用codec编解码方式。如果用copy表示原始编解码数据必须被拷贝
+
+	4.音频选项 
+	-ab bitrate   设置音频码率 
+	-ar freq 	  设置音频采样率 
+	-ac channels  设置通道 缺省为1 
+	-an 		  不使能音频纪录 
+	-acodec codec 使用codec编解码 
+
+	5.音频/视频捕获选项 
+	-vd device      设置视频捕获设备。比如/dev/video0 
+	-vc channel     设置视频捕获通道 DV1394专用 
+	-tvstd standard 设置电视标准 NTSC PAL(SECAM) 
+	-dv1394         设置DV1394捕获 
+	-av device      设置音频设备 比如/dev/dsp 
+
+二、命令模板
+
+1.视频篇
+
+	(1)录制桌面/摄像头
+	支持的输入端:
+	alsa,avfoundation,bktr,dshow,dv1394,
+	fbdev,gdigrab,iec61883,jack,lavfi,libcdio,libdc1394,
+	openal,oss,pulse,qtkit,sndio,video4linux2, v4l2vfwcap,x11grab,decklink,
+
+	可以使用ffmpeg -devices 查询当前笔记本支持的输入设备
+
+
+	录制桌面：
+
+		ffmpeg -f gdigrab  -i desktop -s 1920x1080 -vcodec libx264 eguid.h264
+	-f 指定从哪里采集数据   -i 1 表示从屏幕获取数据，0 表示从摄像头获取数据
+	录制出来分辨率是对的，但在h264分析仪分析的分辨率不对
+
+	可以用	ffmpeg -s 1280x720 -f gdigrab -i desktop -r 30 -pix_fmt yuv420p test.yuv  先录制成yuv格式
+	再用	ffmpeg -s 1280x720 -pix_fmt yuv420p -i test.yuv -vcodec libx264 test.h264 编码成h264格式
+
+
+
+		ffmpeg -f dshow -i video=“screen-capture-recorder” out.mp4
+	使用dshow抓屏需要安装抓屏软件：screen-capture-recorder 
+	软件地址： http://sourceforge.net/projects/screencapturer/
+	可以使用  ffmpeg -list_devices true -f dshow -i dummy  查询录制的设备名
+
+	参考连接：https://blog.csdn.net/leixiaohua1020/article/details/38284961
+
+	(2)转换
+	将 mp4 转化为 flv：
+		ffmpeg -i testfile.mp4 -vcodec copy -acodec copy testfile.flv
+	将 mp4 文件的中视频抽取出来
+		ffmpeg -i testfile.mp4 -vcodec copy -an testfile.flv
+
+	将 mp4 文件中的音频抽取出来
+		ffmpeg -i testfile.mp4 -vn -acodec copy testfile.flv
+	解释：-an 表示阻止文件的所有音频流		-vn 表示阻止文件的所有视频流
+		-acodec 设置音频编解码器            -vcodec 设置视频编解码器    copy表示原始编解码数据必须被拷贝
+
+	抽取 mp4 文件的原始 yuv 视频数据
+		ffmpeg -i testfile.mp4 -an -codec:v rawvideo -pix_fmt yuv420p out.yuv
+	解释：-codec:v 指定视频编解码器   -codec:a 指定音频编解码器   rawvideo 表示原始视频数据
+	抽取 mp4 文件的原始 pcm 音频数据
+		ffmpeg -i testfile.mp4 -vn -ar 44100 -ac 2 -f s16le out.pcm
+	-ar 指定采样率    -ac 指定通道数     -f 指定数据格式 s16le 有符号，16字节，little end
+
+	(3)裁剪
+
+
+
+2.图片篇
+
+	(1)转换格式
+		ffmpeg -i input.png -pix_fmt nv21 -s 640x480 output.yuv    转换后为yuv，需指定转换后的格式
+		-pix_fmt 指定转换格式
+		
+		ffmpeg -pix_fmt nv21 -s 640x480 -i test.yuv output.png	    转换前为yuv，需指定转换前yuv的格式
+	
+ffmpeg -s 1920x1080 -i ./Video/onet_1920x1080.yuv -c:v rawvideo -filter:v select="between(n\, 10\, 11)" out.yuv
+	
+	
+3.音频
+	ffmpeg -f s16le -ar 22050 -ac 1 -i audio1.pcm output.aac
